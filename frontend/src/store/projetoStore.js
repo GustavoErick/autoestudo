@@ -18,29 +18,15 @@ export const useProjetoStore = defineStore('projeto', {
   },
   
   actions: {
-    // async buscarProjetos() {
-    //     this.carregando = true
-    //     try {
-    //       const { data } = await api.get('/projetos')
-    //       this.projetos = data._embedded?.projetos || data || []
-    //       this.erro = null
-    //     } catch (error) {
-    //       this.erro = error.message
-    //       console.error('Erro ao buscar projetos:', error)
-    //     } finally {
-    //       this.carregando = false
-    //     }
-    // },
     async buscarProjetos() {
         this.carregando = true
         try {
             const { data } = await api.get('/projetos')
             const projetos = data._embedded?.projetos || data || []
         
-            // Mapear para incluir o campo `id`
             this.projetos = projetos.map(projeto => {
                 const href = projeto._links?.self?.href || ''
-                const id = href.split('/').pop() // pega o último segmento da URL
+                const id = href.split('/').pop() 
                 return { ...projeto, id }
             })
         

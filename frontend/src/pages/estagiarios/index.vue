@@ -199,24 +199,8 @@
         modalEditar.value = false
     }
 
-    // async function salvarEdicao() {
-    //     try {
-    //         await estagiarioStore.salvarEstagiario({
-    //             ...estagiarioSelecionado.value,
-    //             projeto: `/projetos/${estagiarioSelecionado.value.projeto}`
-    //         })
-    //         //await estagiarioStore.salvarEstagiario(estagiarioSelecionado.value)
-    //         await buscarEstagiarios()
-    //         modalCriar.value = false
-    //         modalEditar.value = false
-    //     } catch (error) {
-    //         console.error('Erro ao salvar estagiario:', error)
-    //     }
-    // }
-
-    async function salvarEdicao() {
+        async function salvarEdicao() {
         try {
-            // Preparar apenas os dados essenciais
             const dadosEssenciais = {
                 id: estagiarioSelecionado.value.id,
                 primeiroNome: estagiarioSelecionado.value.primeiroNome,
@@ -225,7 +209,6 @@
                 status: estagiarioSelecionado.value.status
             };
             
-            // Adicionar projeto apenas se existir
             if (estagiarioSelecionado.value.projeto) {
                 dadosEssenciais.projeto = estagiarioSelecionado.value.projeto;
             }
