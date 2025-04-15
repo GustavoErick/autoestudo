@@ -36,19 +36,21 @@
       <v-card>
         <v-card-title>Adicionar Projeto</v-card-title>
         <v-card-text>
-          <v-text-field label="Nome do Projeto"></v-text-field>
+          <v-text-field v-model="projetoSelecionado.nome" label="Nome do Projeto"></v-text-field>
           <v-select
+            v-model="projetoSelecionado.status"
             :items="statusOptions"
             label="Status"
           ></v-select>
           <v-select
+            v-model="projetoSelecionado.turno"
             :items="turnoOptions"
             label="Turno"
           ></v-select>
         </v-card-text>
         <v-card-actions>
           <v-btn text @click="fecharModalCriar">Cancelar</v-btn>
-          <v-btn color="primary" @click="salvarEdicao">Salvar</v-btn>
+          <v-btn color="primary" @click="salvarEdicao">Adicionar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -124,13 +126,30 @@
   }
 
   function abrirModalCriar() {
-    // projetoSelecionado.value = { ...projeto } 
+    // projeto.value = { ...projeto } 
+    projetoSelecionado.value = {
+      id: null,
+      nome: '',
+      status: '',
+      turno: ''
+    }
     modalCriar.value = true
   }
 
   function fecharModalCriar() {
     modalCriar.value = false
   }
+
+  // async function criarProjeto() {
+  //   try {
+  //     console.log(projeto.value)
+  //     await projetoStore.salvarProjeto(projeto.value)
+  //     await buscarProjetos()
+  //     modalCriar.value = false
+  //   } catch (error) {
+  //     console.error('Erro ao salvar projeto:', error)
+  //   }
+  // }
 
   function abrirModalEditar(projeto) {
     projetoSelecionado.value = { ...projeto } 

@@ -52,9 +52,9 @@ export const useProjetoStore = defineStore('projeto', {
             this.carregando = false
         }
     },
-      
-    
+
     async salvarProjeto(projeto) {
+      console.log(projeto)
       this.carregando = true
       try {
         if (projeto.id) {
@@ -73,18 +73,25 @@ export const useProjetoStore = defineStore('projeto', {
     },
 
     async excluirProjeto(projeto) {
-        this.carregando = true
-        try {
-          if (projeto.id) {
-            await api.delete(`/projetos/${projeto.id}`)
-          }
-
-          await this.buscarProjetos()
-        } catch (error) {
-          this.erro = error.message
-        } finally {
-          this.carregando = false
+      this.carregando = true
+      try {
+        if (projeto.id) {
+          const resposta = await api.get(`http://localhost:8080/projetos/${projeto.id}/estagiarios`);
+          if (resposta.data._embedded && 
+            resposta.data._embedded.estagiarios && 
+            resposta.data._embedded.estagiarios.length > 0) {
+          this.erro = "Não é possível excluir o projeto pois existem estagiários alocados. Desaloque os estagiários primeiro."
+          return
         }
+          await api.delete(`/projetos/${projeto.id}`)
+        }
+
+        await this.buscarProjetos()
+      } catch (error) {
+        this.erro = error.message
+      } finally {
+        this.carregando = false
       }
+    }
   }
 })

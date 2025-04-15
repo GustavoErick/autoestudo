@@ -22,11 +22,16 @@
                 <v-card-title>{{ estagiario.primeiroNome }} {{ estagiario.segundoNome }}</v-card-title>
                 <v-card-subtitle>Status: {{ estagiario.status }}</v-card-subtitle>
                 <v-card-text>Email: {{ estagiario.email }}</v-card-text>
-                <v-card-text>Projeto: {{ estagiario.projeto }}</v-card-text>
+                <!-- <v-card-text>Projeto: {{ estagiario.projeto }}</v-card-text> -->
+                <v-card-text>Projeto: {{ estagiario.nomeProjeto || 'Não associado' }}</v-card-text>
+
 
                 <v-card-actions>
                 <v-btn variant="tonal" @click="abrirModalEditar(estagiario)">Editar</v-btn>
-                <v-btn color="red" @click="abrirModalExcluir(estagiario)">Excluir</v-btn>
+                <!-- <v-btn color="red" @click="abrirModalExcluir(estagiario)">Excluir</v-btn> -->
+                <v-btn color="red" v-if="estagiario.status === 'INATIVO'" @click="abrirModalExcluir(estagiario)">
+                Excluir
+                </v-btn>
                 </v-card-actions>
             </v-card>
             </v-col>
@@ -37,21 +42,25 @@
         <v-card>
             <v-card-title>Adicionar Estagiário</v-card-title>
             <v-card-text>
-            <v-text-field label="Primeiro nome do estagiário"></v-text-field>
-            <v-text-field label="Segundo nome do estagiário"></v-text-field>
-            <v-text-field label="Email do estagiário"></v-text-field>
+            <v-text-field v-model="estagiarioSelecionado.primeiroNome" label="Primeiro nome do estagiário"></v-text-field>
+            <v-text-field v-model="estagiarioSelecionado.segundoNome" label="Segundo nome do estagiário"></v-text-field>
+            <v-text-field v-model="estagiarioSelecionado.email" label="Email do estagiário"></v-text-field>
             <v-select
-                :items="statusOptions"
-                label="Status"
-            ></v-select>
+            v-model="estagiarioSelecionado.status"
+            :items="statusOptions"
+            label="Status"
+            />
             <v-select
-                :items="projetosOptions"
-                label="Projeto"
-            ></v-select>
+            v-model="estagiarioSelecionado.projeto"
+            :items="projetosOptions"
+            item-title="title"
+            item-value="value"
+            label="Projeto"
+            />
             </v-card-text>
             <v-card-actions>
             <v-btn text @click="fecharModalCriar">Cancelar</v-btn>
-            <v-btn color="primary" @click="salvarEdicao">Salvar</v-btn>
+            <v-btn color="primary" @click="salvarEdicao">Adicionar</v-btn>
             </v-card-actions>
         </v-card>
         </v-dialog>
@@ -68,17 +77,15 @@
                 :items="statusOptions"
                 label="Status"
             ></v-select>
-            <!-- <v-select
-                v-model="estagiarioSelecionado.projeto"
-                :items="projetosOptions"
-                label="Projeto"
-            ></v-select> -->
+            <div v-if="estagiarioSelecionado.nomeProjeto" class="mb-2">
+                Projeto atual: <strong>{{ estagiarioSelecionado.nomeProjeto }}</strong>
+            </div>
             <v-select
             v-model="estagiarioSelecionado.projeto"
             :items="projetosOptions"
             item-title="title"
             item-value="value"
-            label="Projeto"
+            label="Selecione o projeto"
             />
             </v-card-text>
             <v-card-actions>
@@ -120,21 +127,30 @@
         segundoNome: '',
         email: '',
         status: '',
-        projeto: ''
+        projeto: null
     })
 
     const statusOptions = ['ATIVO', 'INATIVO']
-    const projetosOptions = [] // fazer req pra ter todos os projetos 
-    projetosOptions.splice(0, projetosOptions.length, ...projetoStore.projetos.map(p => ({
-        title: p.nome,
-        value: p.id
-    })))
-
-
+    
+    
     onMounted(async () => {
-        await buscarEstagiarios()
+        // await buscarEstagiarios()
+        try {
+            await projetoStore.buscarProjetos()
+            projetosOptions.splice(0, projetosOptions.length, ...projetoStore.projetos.map(p => ({
+                title: p.nome,
+                value: p.id
+            })))
+            await buscarEstagiarios()
+        } catch (error) {
+            console.error('Erro ao carregar dados iniciais:', error)
+        } finally {
+            carregando.value = false
+        }
     })
 
+    const projetosOptions = [] // fazer req pra ter todos os projetos 
+    
     async function buscarEstagiarios() {
         carregando.value = true
         try {
@@ -147,6 +163,15 @@
     }
 
     function abrirModalCriar() {
+        estagiarioSelecionado.value = {
+            id: null,
+            primeiroNome: '',
+            segundoNome: '',
+            email: '',
+            status: '',
+            projeto: null
+        }
+
         modalCriar.value = true
     }
 
@@ -154,8 +179,19 @@
         modalCriar.value = false
     }
 
+    // function abrirModalEditar(estagiario) {
+    //     console.log(estagiarioSelecionado.projeto)
+    //     estagiarioSelecionado.value = { ...estagiario } 
+    //     modalEditar.value = true
+    // }
+
     function abrirModalEditar(estagiario) {
-        estagiarioSelecionado.value = { ...estagiario } 
+        const projetoId = estagiario.projeto?.id || estagiario.projeto?.split?.('/').pop() || null
+
+        estagiarioSelecionado.value = {
+            ...estagiario,
+            projeto: projetoId
+        } 
         modalEditar.value = true
     }
 
@@ -163,14 +199,43 @@
         modalEditar.value = false
     }
 
+    // async function salvarEdicao() {
+    //     try {
+    //         await estagiarioStore.salvarEstagiario({
+    //             ...estagiarioSelecionado.value,
+    //             projeto: `/projetos/${estagiarioSelecionado.value.projeto}`
+    //         })
+    //         //await estagiarioStore.salvarEstagiario(estagiarioSelecionado.value)
+    //         await buscarEstagiarios()
+    //         modalCriar.value = false
+    //         modalEditar.value = false
+    //     } catch (error) {
+    //         console.error('Erro ao salvar estagiario:', error)
+    //     }
+    // }
+
     async function salvarEdicao() {
         try {
-            await estagiarioStore.salvarEstagiario(estagiarioSelecionado.value)
-            await buscarEstagiarios()
-            modalCriar.value = false
-            modalEditar.value = false
+            // Preparar apenas os dados essenciais
+            const dadosEssenciais = {
+                id: estagiarioSelecionado.value.id,
+                primeiroNome: estagiarioSelecionado.value.primeiroNome,
+                segundoNome: estagiarioSelecionado.value.segundoNome,
+                email: estagiarioSelecionado.value.email,
+                status: estagiarioSelecionado.value.status
+            };
+            
+            // Adicionar projeto apenas se existir
+            if (estagiarioSelecionado.value.projeto) {
+                dadosEssenciais.projeto = estagiarioSelecionado.value.projeto;
+            }
+            
+            await estagiarioStore.salvarEstagiario(dadosEssenciais);
+            await buscarEstagiarios();
+            modalCriar.value = false;
+            modalEditar.value = false;
         } catch (error) {
-            console.error('Erro ao salvar estagiario:', error)
+            console.error('Erro ao salvar estagiario:', error);
         }
     }
 
